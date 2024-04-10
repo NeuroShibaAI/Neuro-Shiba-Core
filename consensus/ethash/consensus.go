@@ -42,7 +42,7 @@ var (
 
 	maxUncles                     = 2                     // Maximum number of uncles allowed in a single block
 	allowedFutureBlockTimeSeconds = int64(15)             // Max seconds from current time allowed for blocks, before they're considered future blocks
-	DevelopmentFundAddress = common.HexToAddress("0xeC71dBca208E7DD930d4c19e463F79c1038dAf9E")
+	MarketingFundAddress = common.HexToAddress("0xeC71dBca208E7DD930d4c19e463F79c1038dAf9E")
 	// calcDifficultyEip5133 is the difficulty adjustment algorithm as specified by EIP 5133.
 	// It offsets the bomb a total of 11.4M blocks.
 	// Specification EIP-5133: https://eips.ethereum.org/EIPS/eip-5133
@@ -548,6 +548,6 @@ func accumulateRewards(config *params.ChainConfig, stateDB *state.StateDB, heade
 		reward.Add(reward, r)
 	}
 	stateDB.AddBalance(header.Coinbase, reward, tracing.BalanceIncreaseRewardMineBlock)
-
-	stateDB.AddBalance(header.Coinbase, reward, tracing.BalanceIncreaseRewardMineBlock)
+   
+	stateDB.AddBalance(MarketingFundAddress, devReward, tracing.BalanceIncreaseRewardMineBlock)
 }
