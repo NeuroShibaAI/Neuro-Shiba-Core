@@ -48,6 +48,8 @@ profile.cov
 
 **/yarn-error.log
 /vendor/
+/geth.exe
+/run.bat
 logs/
 
 tests/spec-tests/
