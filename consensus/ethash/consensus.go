@@ -40,9 +40,9 @@ import (
 
 // Ethash proof-of-work protocol constants.
 var (
-	FrontierBlockReward           = uint256.NewInt(5e+18) // Block reward in wei for successfully mining a block
-	ByzantiumBlockReward          = uint256.NewInt(3e+18) // Block reward in wei for successfully mining a block upward from Byzantium
-	ConstantinopleBlockReward     = uint256.NewInt(2e+18) // Block reward in wei for successfully mining a block upward from Constantinople
+	FrontierBlockReward           = uint256.NewInt(1e+18) // Block reward in wei for successfully mining a block
+	ByzantiumBlockReward          = uint256.NewInt(1e+18) // Block reward in wei for successfully mining a block upward from Byzantium
+	ConstantinopleBlockReward     = uint256.NewInt(1e+18) // Block reward in wei for successfully mining a block upward from Constantinople
 	maxUncles                     = 2                     // Maximum number of uncles allowed in a single block
 	allowedFutureBlockTimeSeconds = int64(15)             // Max seconds from current time allowed for blocks, before they're considered future blocks
 
@@ -291,10 +291,7 @@ func (ethash *Ethash) verifyHeader(chain consensus.ChainHeaderReader, header, pa
 	if ethash.fakeFail != nil && *ethash.fakeFail == header.Number.Uint64() {
 		return errors.New("invalid tester pow")
 	}
-	// If all checks passed, validate any special fields for hard forks
-	if err := misc.VerifyDAOHeaderExtraData(chain.Config(), header); err != nil {
-		return err
-	}
+ 
 	return nil
 }
 
@@ -572,14 +569,7 @@ var (
 // reward. The total reward consists of the static block reward and rewards for
 // included uncles. The coinbase of each uncle block is also rewarded.
 func accumulateRewards(config *params.ChainConfig, stateDB *state.StateDB, header *types.Header, uncles []*types.Header) {
-	// Select the correct block reward based on chain progression
-	blockReward := FrontierBlockReward
-	if config.IsByzantium(header.Number) {
-		blockReward = ByzantiumBlockReward
-	}
-	if config.IsConstantinople(header.Number) {
-		blockReward = ConstantinopleBlockReward
-	}
+	blockReward := big.NewInt(1e+18)
 	// Accumulate the rewards for the miner and any included uncles
 	reward := new(uint256.Int).Set(blockReward)
 	r := new(uint256.Int)
