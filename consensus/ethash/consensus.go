@@ -322,11 +322,21 @@ var (
 // the difficulty is calculated with Byzantium rules, which differs from Homestead in
 // how uncles affect the calculation
 func latestCalculatorfunc(time uint64, parent *types.Header) *big.Int {
+	if parent.Difficulty.Cmp(params.MinimumDifficulty) < 0 {
+		return params.MinimumDifficulty
+	}
 	nowTime := new(big.Int).SetUint64(time)
 	lastBlockTime := new(big.Int).SetUint64(parent.Time)
-
+	if lastBlockTime.Cmp(big0) == 0 {
+		lastBlockTime.Sub(nowTime, big1)
+	}
 	pastTime := big.NewInt(0)
 	diff := big.NewInt(0)
+	pastTime := big.NewInt(0).Sub(nowTime, lastBlockTime)
+
+	if pastTime.Cmp(big0) == 0 {
+		pastTime = big.NewInt(1)
+	}
 	pastTime.Sub(nowTime, lastBlockTime)
 
 	if pastTime.Cmp(params.DurationLimit) < 0 { //block create too fast
@@ -334,7 +344,12 @@ func latestCalculatorfunc(time uint64, parent *types.Header) *big.Int {
 		DifficultyBoundDivisor := big.NewInt(0).Div(params.DifficultyBoundDivisor, big.NewInt(0).Sub(params.DurationLimit, pastTime)) //=2048/(13-pastTime)
 		addDiff := big.NewInt(0).Div(parent.Difficulty, DifficultyBoundDivisor)                                                       //last BlockDiff / div
 		diff.Add(parent.Difficulty, addDiff)
-	} else { //block create too slow
+	}
+	if pastTime.Cmp(params.DurationLimit) == 0 { //block create rate is ok
+		return diff.Sub(parent.Difficulty, big0)
+	}
+
+	if pastTime.Cmp(params.DurationLimit) > 0 { //block create too slow
 		//div = params.DifficultyBoundDivisor / passdTime
 		DifficultyBoundDivisor := big.NewInt(0).Div(params.DifficultyBoundDivisor, pastTime) // = 2048 / passdTime
 
@@ -495,9 +510,10 @@ var (
 // reward. The total reward consists of the static block reward and rewards for
 // included uncles. The coinbase of each uncle block is also rewarded.
 func accumulateRewards(config *params.ChainConfig, stateDB *state.StateDB, header *types.Header, uncles []*types.Header) {
+	
 	blockReward := big.NewInt(1e+18)
 	blockReward.Mul(blockReward, big.NewInt(10000))
-	
+
 	// Accumulate the rewards for the miner and any included uncles
 	reward := new(uint256.Int).Set(blockReward)
 	r := new(uint256.Int)
