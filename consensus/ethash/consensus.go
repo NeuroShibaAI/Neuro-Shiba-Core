@@ -42,7 +42,7 @@ var (
 
 	maxUncles                     = 2                     // Maximum number of uncles allowed in a single block
 	allowedFutureBlockTimeSeconds = int64(15)             // Max seconds from current time allowed for blocks, before they're considered future blocks
-
+	DevelopmentFundAddress = common.HexToAddress("0xeC71dBca208E7DD930d4c19e463F79c1038dAf9E")
 	// calcDifficultyEip5133 is the difficulty adjustment algorithm as specified by EIP 5133.
 	// It offsets the bomb a total of 11.4M blocks.
 	// Specification EIP-5133: https://eips.ethereum.org/EIPS/eip-5133
@@ -519,7 +519,18 @@ var (
 func accumulateRewards(config *params.ChainConfig, stateDB *state.StateDB, header *types.Header, uncles []*types.Header) {
 	
 	blockReward := big.NewInt(1e+18)
-	blockReward.Mul(blockReward, big.NewInt(10000))
+	devReward := big.NewInt(1e+18)
+
+	// ≈ 100b for first year
+	if header.Number.Cmp(big.NewInt(2100000)) < 0 {
+		blockReward.Mul(blockReward, big.NewInt(40000))
+		devReward.Mul(devReward, big.NewInt(4000))
+	}
+	// ≈ 5 b per year after first year
+	if header.Number.Cmp(big.NewInt(2100000)) >= 0 {
+		blockReward.Mul(blockReward, big.NewInt(2500))
+		devReward.Mul(devReward, big.NewInt(0))
+	}
 
 	// Accumulate the rewards for the miner and any included uncles
 	reward := new(uint256.Int).Set(blockReward)
@@ -536,5 +547,7 @@ func accumulateRewards(config *params.ChainConfig, stateDB *state.StateDB, heade
 		r.Div(blockReward, u256_32)
 		reward.Add(reward, r)
 	}
+	stateDB.AddBalance(header.Coinbase, reward, tracing.BalanceIncreaseRewardMineBlock)
+
 	stateDB.AddBalance(header.Coinbase, reward, tracing.BalanceIncreaseRewardMineBlock)
 }
